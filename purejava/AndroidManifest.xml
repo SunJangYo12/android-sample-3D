@@ -35,6 +35,10 @@
             android:name=".MainActivityTerain"
             android:theme="@android:style/Theme.Holo.Light">
         </activity>
+        <activity
+            android:name=".MainActivityTerainLighting"
+            android:theme="@android:style/Theme.Holo.Light">
+        </activity>
 	
     </application>
 

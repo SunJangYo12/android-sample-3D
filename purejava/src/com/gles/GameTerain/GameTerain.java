@@ -10,6 +10,11 @@ package com.gles.GameTerain;
 import android.util.Log;
 import static android.opengl.GLSurfaceView.Renderer;
 import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
+import static android.opengl.GLES20.GL_DEPTH_BUFFER_BIT;
+import static android.opengl.GLES20.GL_DEPTH_TEST;
+import static android.opengl.GLES20.GL_CULL_FACE;
+import static android.opengl.GLES20.GL_LEQUAL;
+import static android.opengl.GLES20.GL_LESS;
 import static android.opengl.GLES20.GL_VERTEX_SHADER;
 import static android.opengl.GLES20.GL_FRAGMENT_SHADER;
 import static android.opengl.GLES20.GL_COMPILE_STATUS;
@@ -72,6 +77,8 @@ import static android.opengl.GLES20.glDeleteProgram;
 import static android.opengl.GLES20.glGenTextures;
 import static android.opengl.GLES20.glGenBuffers;
 import static android.opengl.GLES20.glDeleteTextures;
+import static android.opengl.GLES20.glDepthFunc;
+import static android.opengl.GLES20.glDepthMask;
 import static android.opengl.GLES20.glBindTexture;
 import static android.opengl.GLES20.glBindBuffer;
 import static android.opengl.GLES20.glTexParameteri;
@@ -186,6 +193,32 @@ public class GameTerain implements Renderer
     public void onSurfaceCreated(GL10 glUnused, EGLConfig config)
     {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        //buffer depth
+        if (tutorial >= 2)
+            glEnable(GL_DEPTH_TEST);
+
+        if (tutorial >= 3) {
+            /*
+            Culling
+                OpenGL juga memberi kita cara mudah lain untuk meningkatkan
+            kinera melalui penghapusan permukaan tersembunyi dengan memungkinkan
+            pemusnahan. secara default OpenGL membuat semua permukaan poligon seolah
+            olah mereka dua sisi. Anda dapat dengan mudah melihat ini berlaku dengan
+            mengedit updateViewMatrix() dan mengubah parameter terakhir dari panggilan
+            ke translate() ke 15f, ini harus menempatkan sudut pandang kami tepat dibawah
+            hightmap. jika kita melihat sekeliling semuanya terlihat agak aneh dan kita
+            tidak akan pernah berharap untuk melihat terain page250.
+                tidak ada gunanya merender bagian bawah terain sehingga kita dapat
+            menebang menarik overhead denan memberi tahu OpenGL untuk mematikan gambar
+            dua sisi. kita dapat melakukan ini dengan kembali ke onSurfaceCreated() dan
+            menambahkan panggilan ke glEnable(GL_CULL_FACE) OpenGl kemudian akan melihat
+            urutan berkelok-kelok setiap tarian, yang merupakan urutan dimana kami
+            mendefinisikan simpul. jika urutan beliku ini muncul berlawanan arah jarum jam
+            dari sudut pandang kami maka segitiga akan ditarik kalau tidak itu akan dibuang.
+            */
+            glEnable(GL_CULL_FACE);
+        }
         
         String skyBoxVertexShader = getShaderCode("skyVertex");
         String skyBoxFragmentShader = getShaderCode("skyFragmen");
@@ -251,11 +284,107 @@ public class GameTerain implements Renderer
     @Override
     public void onDrawFrame(GL10 glUnused)
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+        /*
+        Occluding Hidden objects
+            jika aplikasi dijalankan mungkin anda akan terkejut bahwa terain
+        tidak muncul sama sekali. kami pertama kali menggambar hightmap
+        kemudian kami menggambar skybox tepat setelahnya dan ini menyembunyikan
+        apa yang sebelumnya digambar. dan jika skybox digambar terlebih dahulu
+        maka akan mucul artefak yang aneh, alasan untuk ini adalah karena kita
+        memiliki masalah menimpa yang sama dengan terain itu sendiri, begian
+        berbeda ditarik satu sama lain, adna mungkin juga memperhatikan bahwa
+        partikel-partikel masih jatuh ke bumi yang tidak masuk akal.
+        */
 
-        drawHeightmap();
-        drawSkybox();
-        drawParticles();
+        if (tutorial == 0) {
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            drawHeightmap();
+            drawSkybox();
+            drawParticles();
+        }
+        if (tutorial == 1) {
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            drawSkybox();
+            drawHeightmap();
+            drawParticles();
+        }
+
+        /*
+        Menghapus surface(permukaan) tersembunyi dengan buffer depth(kedalaman)
+            bisakan kita mengurutkan semua segitiga sehingga kita menggambar
+        benda-benda dari belakang ke depan sehingga hal-hal muncul seperti yang
+        diharapkan. ini adalah salah satu solusi yang mungkin tetapi muncul dua
+        masalah, pertama urutan pengundian tergantung pada sudut pandang saat ini
+        dan komputasi itu bisa rumit, kedua solusi ini juga boros karena kami 
+        menghabiskan banyak waktu menggambar hal-hal yang tidak akan pernah terlihat
+        karena akan ditarik oleh sesuatu yang lebih dekat.
+            OpenGL memberi kami solusi yang lebih baik dalam bentuk buffer depth
+        buffer khusus yang merekam kedalaman setiap fragmen dilayar. ketika buffer
+        ini dihidupkan, OpenGL melakukan tes mendalam untuk setiap fragmen jika
+        fragmen lebih dekat dari apa yang sudah ada disana, drawkan: jika tidak buang.
+        mari kita kembalikan urutan undian di onDrawFrame() sehingga highmap ditarik
+        terlebih dahulu dan kemudian mari kita nyalakan buffer depth dengan menambahkan
+        panggilan glEnable(GL_DEPTH_TEST) didalam onSurfaceCreated(). kami juga perlu
+        memperbarui panggilan glClear() ke glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        ini memberitahu OpenGL untuk juga membersihkan buffer depth pada setiap
+        frame(bingkai) baru. kalau kita jalankan maka terain akan berfungsi dengan baik dan partikel
+        jatuh ketanah, tetapi seperti yang bisa kita lihat pada gambar page:247
+        skybox kita sekarang kacau.
+
+        Depth Testing
+            kembali lagi ke page:224 kami menonaktifkan program
+        skybox shader kami sehingga skybox akan ditarik di plane jauh. sekarang
+        pengujian depth dihidupkan, ini menyebabkan masalah bagi kita karena secara
+        default OpenGL hanya akan membiarkan pecahan-pecahanya jika mereka lebih dekat
+        daripada fragmen lain atau lebih dekat dari plane jauh. kami mungkin tidak
+        boleh melihat salah satu skybox sama sekali, tetapi ketidak mampuan floating
+        point memungkinkan beberapa diantaranya muncul.
+            untuk memperbaikinya kita dapat mengubah skybox shader sehingga ditarik
+        sedikit lebih dekat, atau kita dapat mengubah tes depth untuk membiarkan fragmen
+        mari kita ubah drawSkyBox() untuk mengubah tes depth sebagai berikut.
+            glDepthFunc(GL_LEQUAL)
+            << draw >>
+            glDepthFunc(GL_LESS)
+        secara default tes buffer depth diatur ke GL_LESS yang berarti biarkan fragmen
+        baru melalui jika lebih dekat dari apapun yang sudah ada, atau lebih dekat dari
+        plane jauh. Dengan mengubah ini ke GL_LEQUAL hanya untuk skybox, kami mengubah
+        arti untuk "membiarkan fragmen baru melalui jika lebih dekat atau pada jarak
+        yang sama dengan apa yang sudah ada." kami kemudian mengatur ulang tes kembali
+        ke dafault sehingga semuanya masih ditarik seperti yang diharapkan.
+
+        The Depth buffer and translucent Object
+            sekarang skybox kita terlihat baik-baik saja, tetapi masih memliki masalah
+        aneh dengan partikel dimana mereka sekarang dicliped(kelupuk) oleh tanah, tetapi
+        mereka saling menyumbat! ini tidak masuk akal, karena kami ingin partikel-partikel
+        ini tembus cahaya dan berbaur satu sama lain. Kita membutuhkan jalan bagi partikel
+        untuk tidak saling menghalangi sampil tetap memotongnya dimana mereka menyentuh
+        tanah. DiOpenGL dimungkinkan untuk menonaktifkan pembaruan depth sampil tetap
+        mengaktifkan tes. ini berarti bahwa partikel-partiel akan diuji dengan tanah,
+        namun mereka tidak akan menulis informasi baru ke dalam buffer depth, sehingga
+        mereka tidak akan memblokir satu sama lain. ini akan berfungsi dengan baik karena
+        kita menggambar partikel terakhir.
+        */
+        if (tutorial >= 2) { 
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            drawHeightmap();
+            drawSkybox();
+            drawParticles();
+        }
+
+        /*
+        Buffer kedalaman dan perbedaan perspektif
+            Depth buffer menyimpan nilai kedalaman setelah pembagian perspektif
+        telah dilakukan, yang menciptakan hubungan nonlinear antara nilai kedalaman
+        dan jarak. ini memiliki efek memberikan banyak presisi mendalam didekat bidang
+        dekat dan jauh lebih sedikit presisi jauh,yang dapat menyebabkan artis.
+        untuk alasan ini rasio antara plane yang mendekati dan menjauh prespektif
+        tidak boleh lebih besar dari yang diperlukan untuk scene(adegan) saat ini
+        (yaitu, nilai dekat 1 dan nilai yang jauh 100 mungkin baik-baik saja tetapi
+        nilai dekay 0.001 dan nilai yang jauh 100.000 dapat menyebabkan masalah).
+        */
+
     }
 
     /*
@@ -271,10 +400,14 @@ public class GameTerain implements Renderer
     private void drawSkybox() {
         setIdentityM(modelMatrix, 0);
         updateMvpMatrixForskybox();
+        if (tutorial >= 2)
+            glDepthFunc(GL_LEQUAL);
         skyboxProgram.useProgram();
-        skyboxProgram.setUniforms(viewProjectionMatrix, skyboxTexture);
+        skyboxProgram.setUniforms(modelViewProjectionMatrix, skyboxTexture);
         skybox.bindData(skyboxProgram);
         skybox.draw();
+        if (tutorial >= 2)
+            glDepthFunc(GL_LESS);
     }
 
     private void drawParticles() {
@@ -286,15 +419,20 @@ public class GameTerain implements Renderer
 
         setIdentityM(modelMatrix, 0);
         updateMvpMatrix();
+
+        if (tutorial >= 3)
+            glDepthMask(false);
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE);
 
         particlesProgram.useProgram();
-        particlesProgram.setUniforms(viewProjectionMatrix, currentTime, texture);
+        particlesProgram.setUniforms(modelViewProjectionMatrix, currentTime, texture);
         particlesSystem.bindData(particlesProgram);
         particlesSystem.draw();
 
         glDisable(GL_BLEND);
+        if (tutorial >= 3)
+            glDepthMask(true);
     }
 
     /*
@@ -356,6 +494,19 @@ public class GameTerain implements Renderer
     private void updateMvpMatrixForskybox() {
         multiplyMM(tempMatrix, 0, viewMatrixForSky, 0, modelMatrix, 0);
         multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, tempMatrix, 0);
+    }
+
+    public void handleTouchDrag(float deltaX, float deltaY) {
+        xRotation += deltaX / 16f;
+        yRotation += deltaY / 16f;
+        
+        if (yRotation < -90)
+            yRotation = -90;
+        else if(yRotation > 90)
+            yRotation = 90;
+
+        updateViewMatrixs();
+
     }
 
     private String getShaderCode(String options) {
@@ -458,15 +609,6 @@ public class GameTerain implements Renderer
             return strbuffHMF.toString();
         }
         return "";
-    }
-    public void handleTouchDrag(float deltaX, float deltaY) {
-        xRotation += deltaX / 16f;
-        yRotation += deltaY / 16f;
-        
-        if (yRotation < -90)
-            yRotation = -90;
-        else if(yRotation > 90)
-            yRotation = 90;
     }
 
 }
@@ -708,7 +850,7 @@ Creating index buffer object
 class IndexBuffer {
     private final int bufferId;
 
-    public IndexBuffer(short[] vertexData) 
+    public IndexBuffer(short[] indexData) 
     {
         //Alocate a buffer
         final int buffers[] = new int[1];
@@ -724,19 +866,19 @@ class IndexBuffer {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[0]);
 
         //transfer data to native memory
-        ShortBuffer vertexArray = ByteBuffer
-            .allocateDirect(vertexData.length * GameTerain.BYTES_PER_SHORT)
+        ShortBuffer indexArray = ByteBuffer
+            .allocateDirect(indexData.length * GameTerain.BYTES_PER_SHORT)
             .order(ByteOrder.nativeOrder())
             .asShortBuffer()
-            .put(vertexData);
+            .put(indexData);
 
-        vertexArray.position(0);
+        indexArray.position(0);
 
         //transfer data from native memory to the GPU buffer
-        glBufferData(GL_ARRAY_BUFFER, vertexArray.capacity() * GameTerain.BYTES_PER_SHORT, vertexArray, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexArray.capacity() * GameTerain.BYTES_PER_SHORT, indexArray, GL_STATIC_DRAW);
     
         //PENTING: unbind dari buffer saat kita selesai dengan itu.
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     /*
     kita perlu menggunakan ID buffer ketika kita menggunakanya

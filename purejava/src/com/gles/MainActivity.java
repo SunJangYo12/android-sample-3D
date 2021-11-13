@@ -75,6 +75,7 @@ public class MainActivity extends Activity
         menu.add(Menu.FIRST, 2, 1, "Partikel");
         menu.add(Menu.FIRST, 3, 1, "SkyBox");
         menu.add(Menu.FIRST, 4, 1, "Terain");
+        menu.add(Menu.FIRST, 5, 1, "Terain Lighting");
         return true;
     }
 
@@ -91,6 +92,9 @@ public class MainActivity extends Activity
         }
         if (item.getItemId() == 4) {
             startActivity(new Intent(this, MainActivityTerain.class));
+        }
+        if (item.getItemId() == 5) {
+            startActivity(new Intent(this, MainActivityTerainLighting.class));
         }
         return true;
     }

@@ -33,7 +33,8 @@ public class MainActivityTerain extends Activity
         {
             glSurfaceView.setEGLContextClientVersion(2);            
 
-            String[] aksi ={"0. Basic Terain"};
+            String[] aksi ={"0. Basic Terain", "1. Occluding Hidden Object", "2. Removing Hidden Surface with depth buffer","3. Depth Testing",
+                            "4. The depth buffer dan Translucent object", "5. Culling (yang memusnahkan)"};
             AlertDialog.Builder builderIndex = new AlertDialog.Builder(this);
             builderIndex.setTitle("Select Tutorial");
             builderIndex.setItems(aksi, new DialogInterface.OnClickListener() {
