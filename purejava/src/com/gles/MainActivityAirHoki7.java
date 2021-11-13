@@ -12,13 +12,23 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 
+import com.gles.GameAirHoki4.GameAirHoki4;
+import com.gles.GameAirHoki5.GameAirHoki5;
+import com.gles.GameAirHoki6.GameAirHoki6;
 import com.gles.GameAirHoki7.GameAirHoki7;
 
 public class MainActivityAirHoki7 extends Activity 
 {
     private GLSurfaceView glSurfaveView;
     private boolean rendererSet = false;
-    private GameAirHoki7 gameRenderer;
+    private GameAirHoki gameRenderer1;
+    private GameAirHoki2 gameRenderer2;
+    private GameAirHoki3 gameRenderer3;
+    private GameAirHoki4 gameRenderer4;
+    private GameAirHoki5 gameRenderer5;
+    private GameAirHoki6 gameRenderer6;
+    private GameAirHoki7 gameRenderer7;
+    String tutorial = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +42,45 @@ public class MainActivityAirHoki7 extends Activity
         if (supportsEs2) 
         {
             glSurfaveView.setEGLContextClientVersion(2);
-            gameRenderer = new GameAirHoki7(this);
-            glSurfaveView.setRenderer(gameRenderer);
-            rendererSet = true;
+            tutorial = getIntent().getStringExtra("tutorial");
+
+            Toast.makeText(this, tutorial, Toast.LENGTH_LONG).show();
+
+            if (tutorial.equals("1")) {
+                gameRenderer1 = new GameAirHoki();
+                glSurfaveView.setRenderer(gameRenderer1);
+                rendererSet = true;
+            }
+            if (tutorial.equals("2")) {
+                gameRenderer2 = new GameAirHoki2();
+                glSurfaveView.setRenderer(gameRenderer2);
+                rendererSet = true;
+            }
+            if (tutorial.equals("3")) {
+                gameRenderer3 = new GameAirHoki3();
+                glSurfaveView.setRenderer(gameRenderer3);
+                rendererSet = true;
+            }
+            if (tutorial.equals("4")) {
+                gameRenderer4 = new GameAirHoki4();
+                glSurfaveView.setRenderer(gameRenderer4);
+                rendererSet = true;
+            }
+            if (tutorial.equals("5")) {
+                gameRenderer5 = new GameAirHoki5(this);
+                glSurfaveView.setRenderer(gameRenderer5);
+                rendererSet = true;
+            }
+            if (tutorial.equals("6")) {
+                gameRenderer6 = new GameAirHoki6(this);
+                glSurfaveView.setRenderer(gameRenderer6);
+                rendererSet = true;
+            }
+            if (tutorial.equals("7")) {
+                gameRenderer7 = new GameAirHoki7(this);
+                glSurfaveView.setRenderer(gameRenderer7);
+                rendererSet = true;
+            }
         }
         else {
             Toast.makeText(this, "This device does not support OpenGL ES 2.0", Toast.LENGTH_LONG).show();
@@ -78,21 +124,21 @@ public class MainActivityAirHoki7 extends Activity
                     tau android bahwa kami telah menkonsumsi acara sentuh. jika acara itu null maka
                     kita mengembalikan false.
                     */
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) 
+                    if (event.getAction() == MotionEvent.ACTION_DOWN && tutorial.equals("7")) 
                     {
                         glSurfaveView.queueEvent(new Runnable() {
                             @Override
                             public void run() {
-                                gameRenderer.handleTouchPress(normalizedX, normalizedY);
+                                gameRenderer7.handleTouchPress(normalizedX, normalizedY);
                             }
                         });
                     }
-                    else if (event.getAction() == MotionEvent.ACTION_MOVE)
+                    else if (event.getAction() == MotionEvent.ACTION_MOVE && tutorial.equals("7"))
                     {
                         glSurfaveView.queueEvent(new Runnable() {
                             @Override
                             public void run() {
-                                gameRenderer.handleTouchDrag(normalizedX, normalizedY);
+                                gameRenderer7.handleTouchDrag(normalizedX, normalizedY);
                             }
                         });
                     }
@@ -103,7 +149,8 @@ public class MainActivityAirHoki7 extends Activity
                 }
             }
         });
-        setContentView(glSurfaveView);
+        if (rendererSet)
+            setContentView(glSurfaveView);
     }
 
     /*

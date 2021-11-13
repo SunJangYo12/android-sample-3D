@@ -1,7 +1,6 @@
 package com.gles;
 
-import android.app.Activity;
-import android.app.ActivityManager;
+import android.app.*;
 import android.os.Bundle;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.content.DialogInterface;
 
 import com.gles.GameAirHoki6.GameAirHoki6;
 
@@ -82,7 +82,51 @@ public class MainActivity extends Activity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == 1) {
-            startActivity(new Intent(this, MainActivityAirHoki7.class));
+            String[] aksi ={"1. Basic shader", "2. Coloring fragmen shader", "3. Penggunaan Vector dan Matrix",
+                            "4. Memasuki dunia 3D", "5. Menambah detail dengan Texture",
+                            "6. Building Simple Object", "7. Adding touch"};
+            AlertDialog.Builder builderIndex = new AlertDialog.Builder(this);
+            builderIndex.setTitle("Select Tutorial");
+            builderIndex.setItems(aksi, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int item) {
+                    if (item == 0) {
+                        Intent intent = new Intent(MainActivity.this, MainActivityAirHoki7.class);
+                        intent.putExtra("tutorial", "1");
+                        startActivity(intent);
+                    }
+                    if (item == 1) {
+                        Intent intent = new Intent(MainActivity.this, MainActivityAirHoki7.class);
+                        intent.putExtra("tutorial", "2");
+                        startActivity(intent);
+                    }
+                    if (item == 2) {
+                        Intent intent = new Intent(MainActivity.this, MainActivityAirHoki7.class);
+                        intent.putExtra("tutorial", "3");
+                        startActivity(intent);
+                    }
+                    if (item == 3) {
+                        Intent intent = new Intent(MainActivity.this, MainActivityAirHoki7.class);
+                        intent.putExtra("tutorial", "4");
+                        startActivity(intent);
+                    }
+                    if (item == 4) {
+                        Intent intent = new Intent(MainActivity.this, MainActivityAirHoki7.class);
+                        intent.putExtra("tutorial", "5");
+                        startActivity(intent);
+                    }
+                    if (item == 5) {
+                        Intent intent = new Intent(MainActivity.this, MainActivityAirHoki7.class);
+                        intent.putExtra("tutorial", "6");
+                        startActivity(intent);
+                    }
+                    if (item == 6) {
+                        Intent intent = new Intent(MainActivity.this, MainActivityAirHoki7.class);
+                        intent.putExtra("tutorial", "7");
+                        startActivity(intent);
+                    }
+                }
+            });
+            builderIndex.create().show();
         }
         if (item.getItemId() == 2) {
             startActivity(new Intent(this, MainActivityPartikel.class));
